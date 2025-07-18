@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>WebCodecs Audio Recorder Demo</title>
+  <style>
+    #volumeBarContainer { background: #ccc; height: 10px; width: 100%; margin-top: 10px; }
+    #volumeBar { background: green; height: 10px; width: 0%; }
+  </style>
+</head>
+<body>
+  <h1>WebCodecs Stereo Audio Recorder</h1>
+  <button onclick="startRecording()">Start</button>
+  <button onclick="pauseRecording()">Pause</button>
+  <button onclick="resumeRecording()">Resume</button>
+  <button onclick="stopRecording()">Stop & Download</button>
+  <div id="volumeBarContainer"><div id="volumeBar"></div></div>
+
+  <script type="module" src="./recorder.js"></script>
+</body>
+</html>

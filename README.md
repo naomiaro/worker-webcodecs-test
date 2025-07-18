@@ -13,3 +13,9 @@ Pause/resume with flags
 
 Stereo support via AudioData with 2 channels
 
+
+
+Serve it via a local HTTP server (e.g., python3 -m http.server).
+
+Open http://localhost:8000 in a Chromium-based browser.
+

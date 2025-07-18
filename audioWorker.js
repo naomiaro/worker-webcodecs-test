@@ -4,20 +4,25 @@ self.onmessage = async (e) => {
   const { type, config, audioData } = e.data;
 
   if (type === "init") {
-    encoder = new AudioEncoder({
-      output: handleChunk,
-      error: (e) => console.error("AudioEncoder error", e),
-    });
-
-    encoder.configure({
-      codec: config.codec,
-      sampleRate: config.sampleRate,
-      numberOfChannels: config.numberOfChannels,
-      bitrate: config.bitrate,
-    });
+    self.encoderConfig = config; // store desired codec + bitrate
+    return;
   }
 
   if (type === "encode" && audioData) {
+    if (!encoder) {
+      encoder = new AudioEncoder({
+        output: handleChunk,
+        error: (e) => console.error("AudioEncoder error:", e),
+      });
+
+      encoder.configure({
+        codec: self.encoderConfig.codec,
+        sampleRate: audioData.sampleRate,
+        numberOfChannels: audioData.numberOfChannels,
+        bitrate: self.encoderConfig.bitrate,
+      });
+    }
+
     encoder.encode(audioData);
   }
 
@@ -28,6 +33,5 @@ self.onmessage = async (e) => {
 };
 
 function handleChunk(chunk) {
-  const copy = chunk.copy();
-  self.postMessage({ type: "encoded", chunk: copy }, [copy.buffer]);
+  self.postMessage({ type: "encoded", chunk });
 }

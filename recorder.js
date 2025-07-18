@@ -1,4 +1,4 @@
-let worker = new Worker("audioWorker.js", { type: "module" });
+let worker = new Worker("./audioWorker.js", { type: "module" });
 let audioCtx, processor, reader, micTrack;
 let isPaused = false;
 let analyser, dataArray;
@@ -19,14 +19,13 @@ worker.onmessage = (e) => {
   }
 };
 
-async function startRecording() {
+export async function startRecording() {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 2 } });
   micTrack = stream.getAudioTracks()[0];
 
-  audioCtx = new AudioContext({ sampleRate: 48000 });
+  audioCtx = new AudioContext();
   const source = audioCtx.createMediaStreamSource(stream);
 
-  // 🔊 Volume visualization setup
   analyser = audioCtx.createAnalyser();
   analyser.fftSize = 256;
   dataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -35,7 +34,6 @@ async function startRecording() {
   const trackProcessor = new MediaStreamTrackProcessor({ track: micTrack });
   reader = trackProcessor.readable.getReader();
 
-  // 🔧 Encoder config (stereo!)
   worker.postMessage({
     type: "init",
     config: {
@@ -59,31 +57,35 @@ async function readAudio() {
 
     const { done, value } = await reader.read();
     if (done) break;
-    const audioData = value;
-    const transferred = audioData.transferTo({});
-    worker.postMessage({ type: "encode", audioData: transferred }, [transferred]);
+
+    // Send AudioData to worker (transferable automatically)
+    worker.postMessage({ type: "encode", audioData: value }, [value]);
   }
 }
 
 function drawVolume() {
   analyser.getByteFrequencyData(dataArray);
   const volume = Math.max(...dataArray);
-  // Render volume bar (you can replace with canvas logic)
   document.getElementById("volumeBar").style.width = `${volume / 2}%`;
   animationFrame = requestAnimationFrame(drawVolume);
 }
 
-function pauseRecording() {
+export function pauseRecording() {
   isPaused = true;
 }
 
-function resumeRecording() {
+export function resumeRecording() {
   isPaused = false;
 }
 
-function stopRecording() {
+export function stopRecording() {
   reader.cancel();
   micTrack.stop();
   cancelAnimationFrame(animationFrame);
   worker.postMessage({ type: "flush" });
 }
+
+window.startRecording = startRecording;
+window.pauseRecording = pauseRecording;
+window.resumeRecording = resumeRecording;
+window.stopRecording = stopRecording;
