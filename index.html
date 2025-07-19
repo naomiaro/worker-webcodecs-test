@@ -1,21 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>WebCodecs Audio Recorder Demo</title>
+  <meta charset="UTF-8" />
+  <title>WebCodecs Worker + Mediabunny Demo</title>
   <style>
+    body { font-family: sans-serif; padding: 1rem; }
     #volumeBarContainer { background: #ccc; height: 10px; width: 100%; margin-top: 10px; }
     #volumeBar { background: green; height: 10px; width: 0%; }
   </style>
 </head>
 <body>
-  <h1>WebCodecs Stereo Audio Recorder</h1>
+  <h1>WebCodecs Worker + Mediabunny .ogg Recorder</h1>
   <button onclick="startRecording()">Start</button>
-  <button onclick="pauseRecording()">Pause</button>
-  <button onclick="resumeRecording()">Resume</button>
   <button onclick="stopRecording()">Stop & Download</button>
   <div id="volumeBarContainer"><div id="volumeBar"></div></div>
 
-  <script type="module" src="./recorder.js"></script>
+  <script type="module" src="/main.js"></script>
 </body>
 </html>
