@@ -12,13 +12,16 @@ self.onmessage = async (e) => {
     if (!encoder) {
       encoder = new AudioEncoder({
         output: (chunk) => {
+          const raw = new Uint8Array(chunk.byteLength);
+          chunk.copyTo(raw);
+
           const transferableChunk = {
             timestamp: chunk.timestamp,
-            duration: chunk.duration,
+            duration: chunk.duration ?? 0,
             type: chunk.type,
-            data: chunk.data, // already an ArrayBuffer
+            data: raw, // send Uint8Array directly
           };
-          self.postMessage({ type: 'encoded', chunk: transferableChunk }, [transferableChunk.data]);
+          self.postMessage({ type: 'encoded', chunk: transferableChunk }, [raw.buffer]);
         },
         error: (e) => console.error("AudioEncoder error:", e),
       });

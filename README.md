@@ -1,6 +1,7 @@
 # worker-webcodecs-test
 
 https://www.w3.org/TR/webcodecs-mp3-codec-registration/
+https://w3c.github.io/webcodecs/codec_registry.html
 
 
 A main script that captures mic input and uses MediaStreamTrackProcessor

@@ -1,14 +1,17 @@
-import { Output, OggOutputFormat, BufferTarget, EncodedAudioPacketSource } from 'mediabunny';
+import { Output, OggOutputFormat, BufferTarget, EncodedAudioPacketSource, EncodedPacket } from 'mediabunny';
 
 const worker = new Worker('./encoder-worker.js', { type: 'module' });
 let audioCtx, reader, micTrack, analyser, dataArray, animationFrame;
 let encodedChunks = [];
 let actualSampleRate = 48000;
 let actualChannels = 1;
+let isConfigured = false;
 
 worker.onmessage = (e) => {
   if (e.data.type === 'encoded') {
     encodedChunks.push(e.data.chunk);
+
+    // console.log(e.data.chunk);
   }
 };
 
@@ -45,6 +48,13 @@ async function readAudio() {
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
+
+    if (!isConfigured) {
+      actualSampleRate = value.sampleRate;
+      actualChannels = value.numberOfChannels;
+      isConfigured = true;
+    }
+
     worker.postMessage({ type: 'encode', audioData: value }, [value]);
   }
 }
@@ -54,6 +64,25 @@ function drawVolume() {
   const volume = Math.max(...dataArray);
   document.getElementById("volumeBar").style.width = `${volume / 2}%`;
   animationFrame = requestAnimationFrame(drawVolume);
+}
+
+function createOpusDecoderDescription(channels = 1, sampleRate = 48000) {
+  const header = new Uint8Array(19);
+  const view = new DataView(header.buffer);
+
+  const encoderString = "OpusHead";
+  for (let i = 0; i < encoderString.length; i++) {
+    header[i] = encoderString.charCodeAt(i);
+  }
+
+  header[8] = 1;                // version
+  header[9] = channels;         // channel count
+  view.setUint16(10, 0, true);  // pre-skip
+  view.setUint32(12, sampleRate, true); // original sample rate
+  view.setUint16(16, 0, true);  // output gain
+  header[18] = 0;               // channel mapping family
+
+  return header;
 }
 
 export async function stopRecording() {
@@ -70,18 +99,27 @@ export async function stopRecording() {
   });
 
   const source = new EncodedAudioPacketSource('opus');
+  output.addAudioTrack(source);
+  await output.start();
+
   for (const chunk of encodedChunks) {
-    await source.add(chunk, {
+    const packet = new EncodedPacket(
+      chunk.data,
+      chunk.type,
+      chunk.timestamp / 1e6,      // convert from microseconds to seconds
+      chunk.duration / 1e6        // also convert to seconds
+    );
+
+    await source.add(packet, {
       decoderConfig: {
         codec: 'opus',
         numberOfChannels: actualChannels,
-        sampleRate: actualSampleRate
+        sampleRate: actualSampleRate,
+        description: createOpusDecoderDescription(actualChannels, actualSampleRate),
       }
     });
   }
 
-  output.addAudioTrack(source);
-  await output.start();
   await output.finalize();
 
   const blob = new Blob([output.target.buffer], { type: 'audio/ogg' });
@@ -90,6 +128,9 @@ export async function stopRecording() {
   a.href = url;
   a.download = 'recording.ogg';
   a.click();
+
+  encodedChunks = [];
+  isConfigured = false;
 }
 
 window.startRecording = startRecording;
