@@ -1,5 +1,7 @@
 let encoder;
 
+console.log(typeof MediaStreamTrackProcessor !== 'undefined')
+
 self.onmessage = async (e) => {
   const { type, config, audioData } = e.data;
 

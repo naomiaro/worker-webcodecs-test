@@ -1,4 +1,4 @@
-import { Output, OggOutputFormat, BufferTarget, EncodedAudioPacketSource, EncodedPacket } from 'mediabunny';
+import { Output, OggOutputFormat, BufferTarget, EncodedAudioPacketSource, EncodedPacket, getEncodableAudioCodecs } from 'mediabunny';
 
 const worker = new Worker('./encoder-worker.js', { type: 'module' });
 let audioCtx, reader, micTrack, analyser, dataArray, animationFrame;
@@ -7,15 +7,18 @@ let actualSampleRate = 48000;
 let actualChannels = 1;
 let isConfigured = false;
 
+console.log(typeof MediaStreamTrackProcessor !== 'undefined')
+
 worker.onmessage = (e) => {
   if (e.data.type === 'encoded') {
     encodedChunks.push(e.data.chunk);
-
-    // console.log(e.data.chunk);
   }
 };
 
 export async function startRecording() {
+  const codecs =  await getEncodableAudioCodecs();
+  console.log(codecs);
+
   const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 2 } });
   micTrack = stream.getAudioTracks()[0];
 
