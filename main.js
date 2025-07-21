@@ -80,8 +80,12 @@ async function readAudio() {
 
 function drawVolume() {
   analyser.getByteFrequencyData(dataArray);
+
   const volume = Math.max(...dataArray);
-  document.getElementById("volumeBar").style.width = `${volume / 2}%`;
+  const normalized = volume / 255;
+  const percent = Math.min(normalized * 100, 100); // cap at 100%
+  document.getElementById("volumeBar").style.width = `${percent}%`;
+
   animationFrame = requestAnimationFrame(drawVolume);
 }
 
