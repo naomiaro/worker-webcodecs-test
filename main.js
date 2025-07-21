@@ -9,6 +9,22 @@ let isConfigured = false;
 
 console.log(typeof MediaStreamTrackProcessor !== 'undefined')
 
+if (!navigator.mediaDevices?.enumerateDevices) {
+  console.log("enumerateDevices() not supported.");
+} else {
+  // List cameras and microphones.
+  navigator.mediaDevices
+    .enumerateDevices()
+    .then((devices) => {
+      devices.forEach((device) => {
+        console.log(`${device.kind}: ${device.label} id = ${device.deviceId}`);
+      });
+    })
+    .catch((err) => {
+      console.error(`${err.name}: ${err.message}`);
+    });
+}
+
 worker.onmessage = (e) => {
   if (e.data.type === 'encoded') {
     encodedChunks.push(e.data.chunk);
